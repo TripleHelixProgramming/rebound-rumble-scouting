@@ -44,7 +44,7 @@ public class Match
 	public String toString()
 	{
 		String output = matchNum + " " + teamNum + " " + hHoop1 + " " + hHoop2 + " " + hHoop3 + " "
-								 + tHoop1 + " " + tHoop2 + " " + tHoop3 + " " + Boolean.toString(balance) + device;
+								 + tHoop1 + " " + tHoop2 + " " + tHoop3 + " " + Boolean.toString(balance) + " " + device;
 		return output;
 	}
 	
