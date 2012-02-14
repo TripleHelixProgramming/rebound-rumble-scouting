@@ -9,12 +9,15 @@ import java.awt.Toolkit;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
@@ -97,27 +100,73 @@ public class ManagementSystem extends JFrame
 	
 	private void getMasterMatches()
 	{
-		try
+		masterMatches = new ArrayList<Match>();
+		
+		if(scoreFile.exists() && scoreFile.canRead())
 		{
-			masterMatches = new ArrayList<Match>();
-			
-			BufferedReader read = new BufferedReader(new FileReader(scoreFile));
-			String line = "";
-			while((line = read.readLine()) != null)
+			try
 			{
-				masterMatches.add(new Match(line));
+				BufferedReader read = new BufferedReader(new FileReader(scoreFile));
+				String line = "";
+				while((line = read.readLine()) != null)
+				{
+					masterMatches.add(new Match(line));
+				}
+				
+			} catch (IOException e)
+			{
+				e.printStackTrace();
 			}
-			
-			//outputMatchArray();
-		} catch (IOException e)
-		{
-			e.printStackTrace();
 		}
 	}
 	
 	private void saveData(Match m)
 	{
+		for(int i = 0; i < masterMatches.size(); i++)
+		{
+			if(masterMatches.get(i).matchNum > m.matchNum)
+			{
+				masterMatches.add(i, m);
+				i = masterMatches.size();
+			}else if((masterMatches.get(i).matchNum < m.matchNum) && (i == masterMatches.size() - 1))
+			{
+				masterMatches.add(m);
+			}else if((masterMatches.get(i).matchNum == m.matchNum) && (masterMatches.get(i).teamNum > m.teamNum))
+			{
+				masterMatches.add(i, m);
+				i = masterMatches.size();
+			}
+		}
 		
+		if(masterMatches.size() == 0)
+			masterMatches.add(m);
+		
+		writeMasterData();
+	}
+	
+	private void writeMasterData()
+	{
+		try
+		{
+			scoreFile.delete();
+			scoreFile = new File(matchFile.getAbsoluteFile().toString().substring(0, matchFile.getAbsoluteFile().toString().indexOf(".")) + "Scores.txt");
+			scoreFile.createNewFile();
+			
+			BufferedWriter writer = new BufferedWriter(new FileWriter(scoreFile));
+			
+			for(int i = 0; i < masterMatches.size(); i++)
+			{
+				writer.append(masterMatches.get(i).toString());
+				writer.newLine();
+			}
+			
+			writer.flush();
+			writer.close();
+		} catch (IOException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	private void populateMatchFile()
@@ -140,6 +189,34 @@ public class ManagementSystem extends JFrame
 		}
 	}
 	
+	private void outputMatchFile()
+	{
+		try
+		{
+			String name = matchFile.getAbsolutePath();
+			matchFile.delete();
+			matchFile = new File(name);
+			matchFile.createNewFile();
+			
+			BufferedWriter writer = new BufferedWriter(new FileWriter(matchFile));
+			
+			for(int i = 0; i < matchArray.size(); i++)
+			{
+				writer.append(matchArray.get(i).toString());
+				writer.newLine();
+			}
+			
+			writer.flush();
+			writer.close();
+		} catch (IOException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	
+	
 	private void outputMatchArray()
 	{
 		for(int i = 0; i < matchArray.size(); i++)
@@ -154,39 +231,86 @@ public class ManagementSystem extends JFrame
 		//panel.setLayout(new GridBagLayout());
 		for(int i = 0; i < matches.size(); i++)
 		{
+			Match m = matches.get(i);
+			boolean checkFlag = false;
+			
 			for(int j = 0; j < matchArray.size(); j++)
 			{
-				Match m = matches.get(i);
 				MatchManaged completeM = matchArray.get(j);
 				
 				if((m.matchNum == completeM.matchNum))
 				{
-					if(!completeM.red1Check && m.teamNum == completeM.red1)
+					checkFlag = true;
+					
+					if(m.teamNum == completeM.red1)
 					{
-						completeM.red1Check = true;
-						
-						saveData(m);
-					}else if(!completeM.red2Check && m.teamNum == completeM.red2)
+						if(!completeM.red1Check)
+						{
+							completeM.red1Check = true;
+							
+							saveData(m);
+							outputMatchFile();
+						}
+					}else if(m.teamNum == completeM.red2)
 					{
-						completeM.red2Check = true;
-					}else if(!completeM.red3Check && m.teamNum == completeM.red3)
+						if(!completeM.red2Check)
+						{
+							completeM.red2Check = true;
+							
+							saveData(m);
+							outputMatchFile();
+						}
+					}else if(m.teamNum == completeM.red3)
 					{
-						completeM.red3Check = true;
-					}else if(!completeM.blue1Check && m.teamNum == completeM.blue1)
+						if(!completeM.red3Check)
+						{
+							completeM.red3Check = true;
+							
+							saveData(m);
+							outputMatchFile();
+						}
+					}else if(m.teamNum == completeM.blue1)
 					{
-						completeM.blue1Check = true;
-					}else if(!completeM.blue2Check && m.teamNum == completeM.blue2)
+						if(!completeM.blue1Check)
+						{
+							completeM.blue1Check = true;
+							
+							saveData(m);
+							outputMatchFile();
+						}
+					}else if(m.teamNum == completeM.blue2)
 					{
-						completeM.blue2Check = true;
-					}else if(!completeM.blue3Check && m.teamNum == completeM.blue3)
+						if(!completeM.blue2Check)
+						{
+							completeM.blue2Check = true;
+							
+							saveData(m);
+							outputMatchFile();
+						}
+					}else if(m.teamNum == completeM.blue3)
 					{
-						completeM.blue3Check = true;
+						if(!completeM.blue3Check)
+						{
+							completeM.blue3Check = true;
+							
+							saveData(m);
+							outputMatchFile();
+						}
 					}else
 					{
-						//NOT FOUND IN MATCH, ERROR$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+						//NOT FOUND IN MATCH, ERROR$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+						
+						mismatchError(m);
+						j = -1;
 					}
 					
 					revalFrame();
+				}
+				
+				if(!checkFlag)
+				{
+					mismatchError(m);
+					i--;
 				}
 			}
 		}
@@ -218,7 +342,24 @@ public class ManagementSystem extends JFrame
 		
 	}
 	
-	
+	private void mismatchError(Match m)
+	{
+		//error process!!!!!!
+		
+		do
+		{
+			String[] choices = {"Team Mismatch", "Match Mismatch", "Team & Match Mismatch", "Delete"};
+			String s = (String) JOptionPane.showInputDialog(this, "Error Type [" + "]:\n",
+			                    "Error Dialog",
+			                    JOptionPane.ERROR_MESSAGE,
+			                    null,
+			                    choices,
+			                    choices[0]);
+			
+			
+		}while(false);
+		
+	}
 	
 	private class WindowClosed implements WindowListener
 	{
