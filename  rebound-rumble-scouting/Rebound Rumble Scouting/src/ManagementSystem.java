@@ -38,12 +38,15 @@ public class ManagementSystem extends JFrame
 	private UpdateFiles updateFiles;
 	
 	private ArrayList<Match> masterMatches;
+	private ArrayList<Match> removedMatches;
 	
 	public ManagementSystem(File mF)
 	{
 		matchFile = mF;
 		scoreFile = new File(matchFile.getAbsoluteFile().toString().substring(0, matchFile.getAbsoluteFile().toString().indexOf(".")) + "Scores.txt");
 		getMasterMatches();
+		
+		removedMatches = new ArrayList<Match>();
 		
 		setTitle("Scouting Management System");
 		
@@ -299,19 +302,33 @@ public class ManagementSystem extends JFrame
 					}else
 					{
 						//NOT FOUND IN MATCH, ERROR$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-						
+						//System.out.println("MATCH Error Zone");
 						mismatchError(m);
-						j = -1;
+						//j = -1;
+						
+						//m needs reassigned, possibly deleted
+						
+						if(i < matches.size())
+						{
+							m = matches.get(i);
+							j = -1;
+						}else
+						{
+							j = matchArray.size();
+						}
 					}
 					
 					revalFrame();
 				}
 				
-				if(!checkFlag)
-				{
-					mismatchError(m);
-					i--;
-				}
+				
+			}
+			
+			if(!checkFlag)
+			{
+				System.out.println("CheckFlag Error Zone");
+				mismatchError(m);
+				i--;
 			}
 		}
 		
@@ -346,19 +363,82 @@ public class ManagementSystem extends JFrame
 	{
 		//error process!!!!!!
 		
+		String[] choices = {"Team Mismatch", "Match Mismatch", "Team & Match Mismatch", "Delete"};
+		String error_type, newTeamNum = "", newMatchNum = "";
+		int deleteFile = 0;
+		
 		do
 		{
-			String[] choices = {"Team Mismatch", "Match Mismatch", "Team & Match Mismatch", "Delete"};
-			String s = (String) JOptionPane.showInputDialog(this, "Error Type [" + "]:\n",
-			                    "Error Dialog",
-			                    JOptionPane.ERROR_MESSAGE,
-			                    null,
-			                    choices,
-			                    choices[0]);
+			error_type = null;
+			error_type = (String) JOptionPane.showInputDialog(this, "Error Type [Match: " + m.matchNum + ", Team Num: " + m.teamNum + ", Device: " + m.device + "]:\n", "Error Dialog", JOptionPane.ERROR_MESSAGE, null, choices, choices[0]);
+			deleteFile = 0;
+			newTeamNum = "";
+			newMatchNum = "";
 			
 			
-		}while(false);
+			if(error_type != null)
+			{
+				if(error_type.equals(choices[0]))
+				{
+					newTeamNum = (String) JOptionPane.showInputDialog(this, "Enter Team Number: [Old Team - #" + m.teamNum + "]", "Team Mismatch", JOptionPane.INFORMATION_MESSAGE, null, null, Integer.toString(m.teamNum));
+					
+					if(newTeamNum != null)
+					{
+						removedMatches.add(new Match(m.toString()));
+						m.teamNum = Integer.parseInt(newTeamNum);
+					}else
+					{
+						JOptionPane.showMessageDialog(this, "Error in Error Handling!", "Error Dialog", JOptionPane.WARNING_MESSAGE, null);
+					}
+				}else if(error_type.equals(choices[1]))
+				{
+					newMatchNum = (String) JOptionPane.showInputDialog(this, "Enter Match Number: [Old Match - #" + m.matchNum + "]", "Match Mismatch", JOptionPane.INFORMATION_MESSAGE, null, null, Integer.toString(m.matchNum));
+					
+					if(newMatchNum != null)
+					{
+						removedMatches.add(new Match(m.toString()));
+						m.matchNum = Integer.parseInt(newMatchNum);
+					}else
+					{
+						JOptionPane.showMessageDialog(this, "Error in Error Handling!", "Error Dialog", JOptionPane.WARNING_MESSAGE, null);
+					}
+				}else if(error_type.equals(choices[2]))
+				{
+					newTeamNum = (String) JOptionPane.showInputDialog(this, "Enter Team Number: [Old Team - #" + m.teamNum + "]", "Team Mismatch", JOptionPane.INFORMATION_MESSAGE, null, null, Integer.toString(m.teamNum));
+					
+					if(newTeamNum != null)
+					{
+						newMatchNum = (String) JOptionPane.showInputDialog(this, "Enter Match Number: [Old Match - #" + m.matchNum + "]", "Match Mismatch", JOptionPane.INFORMATION_MESSAGE, null, null, Integer.toString(m.matchNum));
+					
+						if(newMatchNum != null)
+						{
+							removedMatches.add(new Match(m.toString()));
+							m.teamNum = Integer.parseInt(newTeamNum);
+							m.matchNum = Integer.parseInt(newMatchNum);
+						}else
+						{
+							JOptionPane.showMessageDialog(this, "Error in Error Handling!", "Error Dialog", JOptionPane.WARNING_MESSAGE, null);
+						}
+					}else
+					{
+						JOptionPane.showMessageDialog(this, "Error in Error Handling!", "Error Dialog", JOptionPane.WARNING_MESSAGE, null);
+					}
+					
+				}else if(error_type.equals(choices[3]))
+				{
+					deleteFile = JOptionPane.showConfirmDialog(this, "Are you sure you want to delete the following Match?\nMatch: " + m.matchNum + ", Team: " + m.teamNum, "Delete Match", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE, null);
+					//System.out.println(deleteFile);
+					if(deleteFile == 0)
+					{
+						matches.remove(m);
+						removedMatches.add(m);
+					}
+				}
+			}
+			
+		}while((error_type == null) || (deleteFile == 1) || (newMatchNum == null) || (newTeamNum == null));
 		
+		//System.out.println("Breaks out of error case.");
 	}
 	
 	private class WindowClosed implements WindowListener
@@ -420,9 +500,25 @@ public class ManagementSystem extends JFrame
 					//System.out.println("Thread");
 					accessFiles = new AccessFiles();
 					
-					if(matches == null || matches.size() != accessFiles.getMatches().size())
+					ArrayList<Match> accessedMatches = accessFiles.getMatches();
+					
+					
+					//System.out.println("Remove Matches...");
+					for(int i = 0; i < removedMatches.size(); i++)
 					{
-						matches = accessFiles.getMatches();
+						for(int j = 0; j < accessedMatches.size(); j++)
+						{
+							if(accessedMatches.get(j).matchNum == removedMatches.get(i).matchNum && accessedMatches.get(j).teamNum == removedMatches.get(i).teamNum)
+							{
+								accessedMatches.remove(j);
+							}
+						}
+					}
+					
+					if(matches == null || matches.size() != accessedMatches.size())
+					{
+						
+						matches = accessedMatches;
 						//System.out.println("Update Files");
 						checkData();
 					}
