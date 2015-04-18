@@ -1,0 +1,1 @@
+This is an FRC Scouting application used to compile data stored from an Android Scouting Application.
